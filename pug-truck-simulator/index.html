@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Pug Truck Simulator — мемная браузерная игра про мопса-дальнобойщика на красной фуре">
+  <title>Pug Truck Simulator — Мопс-дальнобойщик</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Canvas слой игры -->
+    <canvas id="game-canvas" aria-label="Игровое поле Pug Truck Simulator"></canvas>
+
+    <!-- UI оверлеи -->
+    <div id="ui-root">
+      <!-- Главное меню -->
+      <section id="screen-menu" class="screen active">
+        <div class="menu-bg"></div>
+        <header class="menu-header">
+          <p class="menu-tag">🐶 meme × chaos × cartoon</p>
+          <h1 class="game-title">Pug Truck<br><span>Simulator</span></h1>
+          <p class="menu-sub">Мопс Борис на красной фуре. Выживи на трассе!</p>
+        </header>
+        <div class="menu-truck-preview" aria-hidden="true">
+          <canvas id="menu-truck-canvas" width="320" height="180"></canvas>
+        </div>
+        <nav class="menu-buttons">
+          <button class="btn btn-primary btn-lg" id="btn-play">▶ Играть</button>
+          <button class="btn btn-secondary" id="btn-shop-menu">🛒 Магазин</button>
+          <button class="btn btn-secondary" id="btn-leaderboard">🏆 Рекорды</button>
+          <button class="btn btn-ghost" id="btn-settings">⚙️ Настройки</button>
+        </nav>
+      </section>
+
+      <!-- Настройки -->
+      <section id="screen-settings" class="screen">
+        <h2>Настройки</h2>
+        <div class="settings-list">
+          <label class="setting-row">
+            <span>Музыка</span>
+            <input type="range" id="vol-music" min="0" max="100" value="60">
+          </label>
+          <label class="setting-row">
+            <span>Звуки</span>
+            <input type="range" id="vol-sfx" min="0" max="100" value="80">
+          </label>
+          <label class="setting-row toggle">
+            <span>Вибрация (моб.)</span>
+            <input type="checkbox" id="opt-vibrate" checked>
+          </label>
+          <label class="setting-row toggle">
+            <span>Эффекты экрана</span>
+            <input type="checkbox" id="opt-effects" checked>
+          </label>
+        </div>
+        <button class="btn btn-primary" id="btn-settings-back">Назад</button>
+      </section>
+
+      <!-- Рекорды -->
+      <section id="screen-leaderboard" class="screen">
+        <h2>🏆 Таблица рекордов</h2>
+        <ol id="leaderboard-list" class="leaderboard-list"></ol>
+        <button class="btn btn-primary" id="btn-leaderboard-back">Назад</button>
+      </section>
+
+      <!-- Магазин -->
+      <section id="screen-shop" class="screen">
+        <h2>🛒 Гараж Бориса</h2>
+        <p class="shop-balance">💰 <span id="shop-money">0</span></p>
+        <div id="shop-items" class="shop-grid"></div>
+        <button class="btn btn-primary" id="btn-shop-back">Назад</button>
+      </section>
+
+      <!-- HUD (игра) -->
+      <section id="screen-hud" class="screen hud hidden">
+        <div class="hud-top">
+          <div class="hud-stat"><span class="hud-label">Скорость</span><span id="hud-speed">0</span> км/ч</div>
+          <div class="hud-stat"><span class="hud-label">Км</span><span id="hud-km">0</span></div>
+          <div class="hud-stat money">💰 <span id="hud-money">0</span></div>
+        </div>
+        <div class="hud-fuel-wrap">
+          <span>⛽</span>
+          <div class="fuel-bar"><div id="hud-fuel-fill" class="fuel-fill"></div></div>
+        </div>
+        <div class="hud-rating">⭐ <span id="hud-rating">Новичок</span></div>
+        <canvas id="minimap" class="minimap" width="100" height="70" aria-label="Мини-карта"></canvas>
+        <div id="event-toast" class="event-toast hidden"></div>
+        <button class="btn btn-pause" id="btn-pause" aria-label="Пауза">⏸</button>
+      </section>
+
+      <!-- Пауза -->
+      <section id="screen-pause" class="screen overlay hidden">
+        <div class="overlay-box">
+          <h2>Пауза</h2>
+          <button class="btn btn-primary" id="btn-resume">Продолжить</button>
+          <button class="btn btn-secondary" id="btn-quit">В меню</button>
+        </div>
+      </section>
+
+      <!-- Game Over -->
+      <section id="screen-gameover" class="screen overlay hidden">
+        <div class="overlay-box gameover-box">
+          <h2>💥 Борис в беде!</h2>
+          <p id="gameover-reason" class="gameover-reason"></p>
+          <div class="gameover-stats">
+            <div><span>Километры</span><strong id="go-km">0</strong></div>
+            <div><span>Заработано</span><strong id="go-money">0</strong></div>
+            <div><span>Рейтинг</span><strong id="go-rating">0</strong></div>
+          </div>
+          <button class="btn btn-primary btn-lg" id="btn-restart">🔄 Ещё раз</button>
+          <button class="btn btn-ghost" id="btn-gameover-menu">В меню</button>
+        </div>
+      </section>
+
+      <!-- Мобильное управление -->
+      <div id="mobile-controls" class="mobile-controls hidden">
+        <button class="touch-btn" data-dir="left" aria-label="Влево">◀</button>
+        <button class="touch-btn" data-dir="up" aria-label="Газ">▲</button>
+        <button class="touch-btn" data-dir="down" aria-label="Тормоз">▼</button>
+        <button class="touch-btn" data-dir="right" aria-label="Вправо">▶</button>
+        <button class="touch-btn honk" data-action="honk" aria-label="Сигнал">📯</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/animations.js"></script>
+  <script src="js/background.js"></script>
+  <script src="js/entities.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
